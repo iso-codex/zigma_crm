@@ -1,6 +1,6 @@
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { useAuthStore } from '@/store/useAuthStore';
-import { LayoutDashboard, Users, Target, FileText, Settings, LogOut, Menu, X, Activity, PieChart, Briefcase } from 'lucide-react';
+import { LayoutDashboard, Users, Target, FileText, LogOut, Activity, PieChart, Briefcase } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export default function Layout() {

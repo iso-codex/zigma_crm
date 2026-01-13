@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
-import { ArrowLeft, Mail, Phone, MapPin, Building, ShieldCheck, FileText, Activity } from 'lucide-react';
+import { ArrowLeft, Mail, Phone, MapPin, Building, FileText, Activity } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export default function InvestorDetails() {
@@ -9,7 +9,6 @@ export default function InvestorDetails() {
     const navigate = useNavigate();
     const [investor, setInvestor] = useState<any>(null);
     const [loading, setLoading] = useState(true);
-    const [activity, setActivity] = useState<any[]>([]);
 
     useEffect(() => {
         if (!id) return;

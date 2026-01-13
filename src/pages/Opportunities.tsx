@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useOpportunityStore, type Opportunity } from '@/store/useOpportunityStore';
-import { cn } from '@/lib/utils';
+import { useOpportunityStore, type Opportunity } from '@/store/useOpportunityStore';
 import { Plus } from 'lucide-react';
 import { OpportunityModal } from '@/components/opportunities/OpportunityModal';
 
@@ -25,7 +25,7 @@ export default function Opportunities() {
         e.dataTransfer.setData('id', id);
     };
 
-    const onDragOver = (e: React.DragEvent, stage: Opportunity['stage']) => {
+    const onDragOver = (e: React.DragEvent) => {
         e.preventDefault();
     };
 

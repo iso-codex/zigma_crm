@@ -33,7 +33,7 @@ const KPICard = ({ title, value, subtext, icon: Icon, colorClass, onClick }: any
 );
 
 export default function Dashboard() {
-    const { metrics, fetchMetrics, loading, subscribeToUpdates, unsubscribeFromUpdates } = useDashboardStore();
+    const { metrics, fetchMetrics, subscribeToUpdates, unsubscribeFromUpdates } = useDashboardStore();
     const { user } = useAuthStore();
     const navigate = useNavigate();
 
