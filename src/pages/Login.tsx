@@ -28,20 +28,24 @@ export default function Login() {
                     options: {
                         data: {
                             full_name: email.split('@')[0],
+                            role: 'investor', // Default role for new signups
                         }
                     }
                 });
                 if (error) throw error;
-                // For demo purposes, we might want to alert or just auto-login if possible
                 alert('Account created! Please sign in.');
                 setIsSignUp(false);
             } else {
-                const { error } = await supabase.auth.signInWithPassword({
+                const { data, error } = await supabase.auth.signInWithPassword({
                     email,
                     password
                 });
                 if (error) throw error;
-                navigate('/dashboard');
+
+                // Get user role and redirect to appropriate dashboard
+                const userRole = data.user?.user_metadata?.role || 'investor';
+                const redirectRoute = userRole === 'investor' ? '/investor/dashboard' : '/dashboard';
+                navigate(redirectRoute);
             }
         } catch (err: any) {
             setError(err.message);
