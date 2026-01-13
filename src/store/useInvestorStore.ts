@@ -8,6 +8,11 @@ interface Investor {
     status: string;
     contact_email: string;
     preferences: any;
+    country?: string;
+    accreditation_status?: 'Pending' | 'Accredited' | 'Not Accredited';
+    kyc_status?: 'Pending' | 'Verified' | 'Rejected';
+    aml_status?: 'Pending' | 'Verified' | 'Rejected';
+    onboarding_stage?: 'Lead' | 'Qualified' | 'Verified' | 'Active';
 }
 
 interface InvestorState {

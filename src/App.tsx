@@ -4,6 +4,9 @@ import { useAuthStore } from '@/store/useAuthStore';
 import Login from '@/pages/Login';
 import Dashboard from '@/pages/Dashboard';
 import Investors from '@/pages/Investors';
+import InvestorDetails from '@/pages/InvestorDetails';
+import Funds from '@/pages/Funds';
+import LandingPage from '@/pages/LandingPage';
 import Opportunities from '@/pages/Opportunities';
 import Leads from '@/pages/Leads';
 import Layout from '@/components/Layout';
@@ -27,17 +30,20 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
+        <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<Login />} />
 
-        <Route path="/" element={
+        <Route element={
           <ProtectedRoute>
             <Layout />
           </ProtectedRoute>
         }>
-          <Route index element={<Dashboard />} />
-          <Route path="investors" element={<Investors />} />
-          <Route path="opportunities" element={<Opportunities />} />
-          <Route path="leads" element={<Leads />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/investors" element={<Investors />} />
+          <Route path="/investors/:id" element={<InvestorDetails />} />
+          <Route path="/funds" element={<Funds />} />
+          <Route path="/opportunities" element={<Opportunities />} />
+          <Route path="/leads" element={<Leads />} />
         </Route>
       </Routes>
     </BrowserRouter>

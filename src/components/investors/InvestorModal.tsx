@@ -103,6 +103,50 @@ export function InvestorModal({ onClose }: InvestorModalProps) {
                         </select>
                     </div>
 
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                            Country
+                        </label>
+                        <input
+                            type="text"
+                            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            value={(formData as any).country || ''}
+                            onChange={e => setFormData({ ...formData, country: e.target.value } as any)}
+                        />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                Accreditation
+                            </label>
+                            <select
+                                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                value={(formData as any).accreditation_status || 'Pending'}
+                                onChange={e => setFormData({ ...formData, accreditation_status: e.target.value } as any)}
+                            >
+                                <option value="Pending">Pending</option>
+                                <option value="Accredited">Accredited</option>
+                                <option value="Not Accredited">Not Accredited</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                Onboarding Stage
+                            </label>
+                            <select
+                                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                                value={(formData as any).onboarding_stage || 'Lead'}
+                                onChange={e => setFormData({ ...formData, onboarding_stage: e.target.value } as any)}
+                            >
+                                <option value="Lead">Lead</option>
+                                <option value="Qualified">Qualified</option>
+                                <option value="Verified">Verified</option>
+                                <option value="Active">Active</option>
+                            </select>
+                        </div>
+                    </div>
+
                     <div className="pt-4 flex gap-3">
                         <button
                             type="button"

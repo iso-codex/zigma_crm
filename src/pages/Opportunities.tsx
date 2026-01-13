@@ -90,14 +90,22 @@ export default function Opportunities() {
                                                 <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">
                                                     ${(opp.amount / 1000).toFixed(0)}k
                                                 </span>
-                                                <span className={cn(
-                                                    "text-[10px] px-1.5 py-0.5 rounded",
-                                                    opp.probability > 70 ? "bg-green-100 text-green-700" :
-                                                        opp.probability > 40 ? "bg-yellow-100 text-yellow-700" :
-                                                            "bg-red-100 text-red-700"
-                                                )}>
-                                                    {opp.probability}%
-                                                </span>
+                                                <div className="flex items-center gap-2">
+                                                    <button
+                                                        onClick={() => updateStage(opp.id, 'Closed')}
+                                                        className="text-[10px] text-green-600 hover:text-green-800 bg-green-50 px-1.5 py-0.5 rounded border border-green-100"
+                                                        title="Mark as Closed Won"
+                                                    >
+                                                        Won
+                                                    </button>
+                                                    <button
+                                                        onClick={() => updateStage(opp.id, 'Lost')}
+                                                        className="text-[10px] text-red-600 hover:text-red-800 bg-red-50 px-1.5 py-0.5 rounded border border-red-100"
+                                                        title="Mark as Lost"
+                                                    >
+                                                        Lost
+                                                    </button>
+                                                </div>
                                             </div>
                                         </div>
                                     ))}

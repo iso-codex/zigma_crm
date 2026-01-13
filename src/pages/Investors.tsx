@@ -3,6 +3,7 @@ import { useInvestorStore } from '@/store/useInvestorStore';
 import { Plus, Search, Filter } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { InvestorModal } from '@/components/investors/InvestorModal';
+import { Link } from 'react-router-dom';
 
 export default function Investors() {
     const { investors, loading, fetchInvestors } = useInvestorStore();
@@ -61,25 +62,45 @@ export default function Investors() {
                                 <div className="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold">
                                     {investor.name.substring(0, 2).toUpperCase()}
                                 </div>
-                                <span className={cn(
-                                    "px-2 py-1 rounded-full text-xs font-medium",
-                                    investor.status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'
-                                )}>
-                                    {investor.status}
-                                </span>
+                                <div className="flex flex-col items-end gap-1">
+                                    <span className={cn(
+                                        "px-2 py-1 rounded-full text-xs font-medium",
+                                        investor.status === 'Active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'
+                                    )}>
+                                        {investor.status}
+                                    </span>
+                                    {investor.onboarding_stage && (
+                                        <span className="text-[10px] text-gray-500 font-medium bg-gray-50 px-2 py-0.5 rounded">
+                                            {investor.onboarding_stage}
+                                        </span>
+                                    )}
+                                </div>
                             </div>
                             <h3 className="font-semibold text-gray-900 dark:text-white text-lg">{investor.name}</h3>
-                            <p className="text-gray-500 text-sm mb-4">{investor.type}</p>
+                            <div className="flex justify-between items-center mb-4">
+                                <p className="text-gray-500 text-sm">{investor.type}</p>
+                                {investor.country && <span className="text-xs text-gray-400">📍 {investor.country}</span>}
+                            </div>
 
                             <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400 mb-4">
                                 <div className="flex items-center gap-2">
                                     <span className="w-4 h-4 opacity-70">📧</span>
                                     {investor.contact_email || 'No email'}
                                 </div>
+                                <div className="flex gap-2 mt-2">
+                                    {investor.accreditation_status === 'Accredited' && (
+                                        <span className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded border border-blue-100">Accredited</span>
+                                    )}
+                                </div>
                             </div>
 
                             <div className="pt-4 border-t border-gray-100 dark:border-gray-700 flex justify-between items-center">
-                                <button className="text-indigo-600 text-sm font-medium hover:text-indigo-500">View Profile</button>
+                                <Link
+                                    to={`/investors/${investor.id}`}
+                                    className="text-indigo-600 text-sm font-medium hover:text-indigo-500"
+                                >
+                                    View Profile
+                                </Link>
                                 <button className="text-gray-400 hover:text-gray-600 text-sm">...</button>
                             </div>
                         </div>

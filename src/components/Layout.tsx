@@ -1,14 +1,6 @@
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { useAuthStore } from '@/store/useAuthStore';
-import {
-    Users,
-    LayoutDashboard,
-    PieChart,
-    LogOut,
-    Target,
-    Briefcase,
-    Activity
-} from 'lucide-react';
+import { LayoutDashboard, Users, Target, FileText, Settings, LogOut, Menu, X, Activity, PieChart, Briefcase } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export default function Layout() {
@@ -16,10 +8,11 @@ export default function Layout() {
     const location = useLocation();
 
     const navigation = [
-        { name: 'Dashboard', href: '/', icon: LayoutDashboard },
+        { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
         { name: 'Investors', href: '/investors', icon: Users },
+        { name: 'Funds', href: '/funds', icon: Briefcase }, // Added Funds item, maintaining original structure
         { name: 'Opportunities', href: '/opportunities', icon: Target },
-        { name: 'Leads', href: '/leads', icon: Briefcase },
+        { name: 'Leads', href: '/leads', icon: FileText }, // Changed icon for Leads to FileText as per snippet, maintaining name/href
         { name: 'Activities', href: '/activities', icon: Activity },
         { name: 'Reports', href: '/reports', icon: PieChart },
     ];

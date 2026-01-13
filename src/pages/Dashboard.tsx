@@ -4,10 +4,17 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { Search, Bell, MoreVertical, DollarSign, Users, MessageSquare, Briefcase, CheckCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/store/useAuthStore';
+import { useNavigate } from 'react-router-dom';
 
 // KPI Card Component
-const KPICard = ({ title, value, subtext, icon: Icon, colorClass }: any) => (
-    <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col justify-between h-[140px]">
+const KPICard = ({ title, value, subtext, icon: Icon, colorClass, onClick }: any) => (
+    <div
+        onClick={onClick}
+        className={cn(
+            "bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col justify-between h-[140px] transition-transform hover:scale-105 cursor-pointer",
+            onClick ? "cursor-pointer" : "cursor-default"
+        )}
+    >
         <div className="flex justify-between items-start">
             <div className={cn("p-2 rounded-lg", colorClass)}>
                 <Icon className="w-5 h-5 text-white" />
@@ -26,12 +33,15 @@ const KPICard = ({ title, value, subtext, icon: Icon, colorClass }: any) => (
 );
 
 export default function Dashboard() {
-    const { metrics, fetchMetrics, loading } = useDashboardStore();
+    const { metrics, fetchMetrics, loading, subscribeToUpdates, unsubscribeFromUpdates } = useDashboardStore();
     const { user } = useAuthStore();
+    const navigate = useNavigate();
 
     useEffect(() => {
         fetchMetrics();
-    }, [fetchMetrics]);
+        subscribeToUpdates();
+        return () => unsubscribeFromUpdates();
+    }, [fetchMetrics, subscribeToUpdates, unsubscribeFromUpdates]);
 
     return (
         <div className="space-y-8">
@@ -68,6 +78,7 @@ export default function Dashboard() {
                     value={`$${(metrics.totalRevenue / 1000000).toFixed(1)}M`}
                     icon={DollarSign}
                     colorClass="bg-yellow-500"
+                    onClick={() => navigate('/opportunities')}
                 />
                 <KPICard
                     title="New Leads"
@@ -75,6 +86,7 @@ export default function Dashboard() {
                     subtext="+12%"
                     icon={Users}
                     colorClass="bg-indigo-500"
+                    onClick={() => navigate('/leads')}
                 />
                 <KPICard
                     title="Contacted"
@@ -82,6 +94,7 @@ export default function Dashboard() {
                     subtext="+5%"
                     icon={MessageSquare}
                     colorClass="bg-blue-500"
+                    onClick={() => navigate('/leads')}
                 />
                 <KPICard
                     title="Negotiation"
@@ -89,6 +102,7 @@ export default function Dashboard() {
                     subtext="+2%"
                     icon={Briefcase}
                     colorClass="bg-orange-500"
+                    onClick={() => navigate('/opportunities')}
                 />
                 <KPICard
                     title="Closed Deals"
@@ -96,6 +110,7 @@ export default function Dashboard() {
                     subtext="+8%"
                     icon={CheckCircle}
                     colorClass="bg-green-500"
+                    onClick={() => navigate('/opportunities')}
                 />
             </div>
 
@@ -179,7 +194,12 @@ export default function Dashboard() {
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
                 <div className="p-6 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
                     <h3 className="font-bold text-gray-900 dark:text-white">Recent Leads</h3>
-                    <button className="text-sm text-indigo-600 hover:text-indigo-800">View all ↗</button>
+                    <button
+                        onClick={() => navigate('/leads')}
+                        className="text-sm text-indigo-600 hover:text-indigo-800"
+                    >
+                        View all ↗
+                    </button>
                 </div>
                 <div className="overflow-x-auto">
                     <table className="w-full">
