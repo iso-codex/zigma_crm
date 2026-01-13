@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '@/store/useAuthStore';
 import Login from '@/pages/Login';
 import Dashboard from '@/pages/Dashboard';
@@ -15,6 +15,81 @@ import Layout from '@/components/Layout';
 import InvestorLayout from '@/components/InvestorLayout';
 import { RoleBasedRoute } from '@/components/RoleBasedRoute';
 
+function AppRoutes() {
+  const { user, loading, getDefaultRoute } = useAuthStore();
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // Redirect authenticated users away from public pages if they land there
+  useEffect(() => {
+    if (!loading && user && (location.pathname === '/' || location.pathname === '/login')) {
+      navigate(getDefaultRoute(), { replace: true });
+    }
+  }, [user, loading, navigate, getDefaultRoute, location.pathname]);
+
+  return (
+    <Routes>
+      <Route path="/" element={<LandingPage />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/auth/callback" element={<AuthCallback />} />
+
+      {/* Admin & Staff Dashboard Routes */}
+      <Route element={
+        <RoleBasedRoute
+          requiredPermission="viewAdminDashboard"
+          redirectTo="/investor/dashboard"
+        >
+          <Layout />
+        </RoleBasedRoute>
+      }>
+        <Route path="/dashboard" element={<Dashboard />} />
+
+        <Route path="/investors" element={
+          <RoleBasedRoute requiredPermission="viewInvestors">
+            <Investors />
+          </RoleBasedRoute>
+        } />
+
+        <Route path="/investors/:id" element={
+          <RoleBasedRoute requiredPermission="viewInvestors">
+            <InvestorDetails />
+          </RoleBasedRoute>
+        } />
+
+        <Route path="/funds" element={
+          <RoleBasedRoute requiredPermission="viewFunds">
+            <Funds />
+          </RoleBasedRoute>
+        } />
+
+        <Route path="/opportunities" element={
+          <RoleBasedRoute requiredPermission="viewOpportunities">
+            <Opportunities />
+          </RoleBasedRoute>
+        } />
+
+        <Route path="/leads" element={
+          <RoleBasedRoute requiredPermission="viewLeads">
+            <Leads />
+          </RoleBasedRoute>
+        } />
+      </Route>
+
+      {/* Investor Portal Routes */}
+      <Route element={
+        <RoleBasedRoute
+          requiredPermission="viewInvestorPortal"
+          redirectTo="/dashboard"
+        >
+          <InvestorLayout />
+        </RoleBasedRoute>
+      }>
+        <Route path="/investor/dashboard" element={<InvestorPortal />} />
+      </Route>
+    </Routes>
+  );
+}
+
 function App() {
   const { initialize } = useAuthStore();
 
@@ -24,65 +99,7 @@ function App() {
 
   return (
     <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<LandingPage />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/auth/callback" element={<AuthCallback />} />
-
-        {/* Admin & Staff Dashboard Routes */}
-        <Route element={
-          <RoleBasedRoute
-            requiredPermission="viewAdminDashboard"
-            redirectTo="/investor/dashboard"
-          >
-            <Layout />
-          </RoleBasedRoute>
-        }>
-          <Route path="/dashboard" element={<Dashboard />} />
-
-          <Route path="/investors" element={
-            <RoleBasedRoute requiredPermission="viewInvestors">
-              <Investors />
-            </RoleBasedRoute>
-          } />
-
-          <Route path="/investors/:id" element={
-            <RoleBasedRoute requiredPermission="viewInvestors">
-              <InvestorDetails />
-            </RoleBasedRoute>
-          } />
-
-          <Route path="/funds" element={
-            <RoleBasedRoute requiredPermission="viewFunds">
-              <Funds />
-            </RoleBasedRoute>
-          } />
-
-          <Route path="/opportunities" element={
-            <RoleBasedRoute requiredPermission="viewOpportunities">
-              <Opportunities />
-            </RoleBasedRoute>
-          } />
-
-          <Route path="/leads" element={
-            <RoleBasedRoute requiredPermission="viewLeads">
-              <Leads />
-            </RoleBasedRoute>
-          } />
-        </Route>
-
-        {/* Investor Portal Routes */}
-        <Route element={
-          <RoleBasedRoute
-            requiredPermission="viewInvestorPortal"
-            redirectTo="/dashboard"
-          >
-            <InvestorLayout />
-          </RoleBasedRoute>
-        }>
-          <Route path="/investor/dashboard" element={<InvestorPortal />} />
-        </Route>
-      </Routes>
+      <AppRoutes />
     </BrowserRouter>
   );
 }
