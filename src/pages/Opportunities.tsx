@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import { useOpportunityStore, type Opportunity } from '@/store/useOpportunityStore';
-import { useOpportunityStore, type Opportunity } from '@/store/useOpportunityStore';
 import { Plus } from 'lucide-react';
 import { OpportunityModal } from '@/components/opportunities/OpportunityModal';
 
