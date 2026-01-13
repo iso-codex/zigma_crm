@@ -11,7 +11,6 @@ import Opportunities from '@/pages/Opportunities';
 import Leads from '@/pages/Leads';
 import InvestorPortal from '@/pages/InvestorPortal';
 import AuthCallback from '@/pages/AuthCallback';
-import Profile from '@/pages/Profile';
 import Layout from '@/components/Layout';
 import InvestorLayout from '@/components/InvestorLayout';
 import { RoleBasedRoute } from '@/components/RoleBasedRoute';
@@ -70,8 +69,6 @@ function App() {
               <Leads />
             </RoleBasedRoute>
           } />
-
-          <Route path="/profile" element={<Profile />} />
         </Route>
 
         {/* Investor Portal Routes */}
@@ -84,7 +81,6 @@ function App() {
           </RoleBasedRoute>
         }>
           <Route path="/investor/dashboard" element={<InvestorPortal />} />
-          <Route path="/investor/profile" element={<Profile />} />
         </Route>
       </Routes>
     </BrowserRouter>
