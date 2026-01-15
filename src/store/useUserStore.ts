@@ -20,7 +20,7 @@ interface UserState {
     subscribeToUpdates: () => () => void;
 }
 
-export const useUserStore = create<UserState>((set, get) => ({
+export const useUserStore = create<UserState>((set) => ({
     users: [],
     loading: false,
     error: null,
