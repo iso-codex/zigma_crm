@@ -11,6 +11,7 @@ import Opportunities from '@/pages/Opportunities';
 import Leads from '@/pages/Leads';
 import InvestorPortal from '@/pages/InvestorPortal';
 import AuthCallback from '@/pages/AuthCallback';
+import UserManagement from '@/pages/UserManagement';
 import Layout from '@/components/Layout';
 import InvestorLayout from '@/components/InvestorLayout';
 import { RoleBasedRoute } from '@/components/RoleBasedRoute';
@@ -73,6 +74,12 @@ function AppRoutes() {
             <Leads />
           </RoleBasedRoute>
         } />
+
+        <Route path="/users" element={
+          <RoleBasedRoute requiredPermission="manageUsers">
+            <UserManagement />
+          </RoleBasedRoute>
+        } />
       </Route>
 
       {/* Investor Portal Routes */}
@@ -85,6 +92,9 @@ function AppRoutes() {
         </RoleBasedRoute>
       }>
         <Route path="/investor/dashboard" element={<InvestorPortal />} />
+        <Route path="/investor/transactions" element={<InvestorPortal initialTab="transactions" />} />
+        <Route path="/investor/documents" element={<InvestorPortal initialTab="documents" />} />
+        <Route path="/investor/profile" element={<InvestorPortal initialTab="profile" />} />
       </Route>
     </Routes>
   );

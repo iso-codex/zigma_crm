@@ -29,25 +29,65 @@ export const useAuthStore = create<AuthState>((set, get) => ({
             const { data: { session } } = await supabase.auth.getSession();
 
             if (session?.user) {
-                // Get user role from user metadata or database
-                // For now, we'll use metadata. In production, fetch from a user_roles table
-                const userRole = (session.user.user_metadata?.role as UserRole) || 'investor';
+                // Fetch user role from profiles table
+                const { data: profile, error: profileError } = await supabase
+                    .from('profiles')
+                    .select('role')
+                    .eq('id', session.user.id)
+                    .single();
+
+                if (profileError) {
+                    console.error("Error fetching profile role:", profileError);
+                }
+
+                const userRole = (profile?.role as UserRole) || (session.user.user_metadata?.role as UserRole) || 'investor';
                 const permissions = getRolePermissions(userRole);
                 set({ session, user: session.user, role: userRole, permissions, loading: false });
             } else {
                 set({ session: null, user: null, role: null, permissions: null, loading: false });
             }
 
-            // listen for changes
-            supabase.auth.onAuthStateChange((_event, session) => {
+            // listen for auth changes
+            supabase.auth.onAuthStateChange(async (_event, session) => {
                 if (session?.user) {
-                    const userRole = (session.user.user_metadata?.role as UserRole) || 'investor';
+                    // Fetch user role from profiles table on auth change
+                    const { data: profile } = await supabase
+                        .from('profiles')
+                        .select('role')
+                        .eq('id', session.user.id)
+                        .single();
+
+                    const userRole = (profile?.role as UserRole) || (session.user.user_metadata?.role as UserRole) || 'investor';
                     const permissions = getRolePermissions(userRole);
                     set({ session, user: session.user, role: userRole, permissions, loading: false });
                 } else {
                     set({ session: null, user: null, role: null, permissions: null, loading: false });
                 }
             });
+
+            // Listen for Realtime changes to the current user's profile
+            if (session?.user) {
+                supabase
+                    .channel(`profile-updates-${session.user.id}`)
+                    .on(
+                        'postgres_changes',
+                        {
+                            event: 'UPDATE',
+                            schema: 'public',
+                            table: 'profiles',
+                            filter: `id=eq.${session.user.id}`
+                        },
+                        (payload) => {
+                            console.log('Profile updated via Realtime:', payload.new);
+                            const newRole = payload.new.role as UserRole;
+                            if (newRole) {
+                                const permissions = getRolePermissions(newRole);
+                                set({ role: newRole, permissions });
+                            }
+                        }
+                    )
+                    .subscribe();
+            }
         } catch (error) {
             console.error("Auth init error:", error);
             set({ loading: false });

@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { DollarSign, TrendingUp, FileText, Bell, Download, User, Upload, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/lib/supabase';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 interface Investment {
     id: string;
@@ -15,19 +17,44 @@ interface Investment {
 
 interface Transaction {
     id: string;
-    type: string;
+    investor_id: string;
+    type: 'Investment' | 'Dividend' | 'Withdrawal' | 'Fee';
     amount: number;
     date: string;
     description: string;
 }
 
-export default function InvestorPortal() {
+interface Document {
+    id: string;
+    name: string;
+    url: string;
+    type: string;
+    created_at: string;
+}
+
+interface PerformanceData {
+    name: string;
+    value: number;
+}
+
+interface InvestorPortalProps {
+    initialTab?: 'overview' | 'transactions' | 'documents' | 'profile';
+}
+
+export default function InvestorPortal({ initialTab = 'overview' }: InvestorPortalProps) {
     const { user } = useAuthStore();
     const [investments, setInvestments] = useState<Investment[]>([]);
     const [transactions, setTransactions] = useState<Transaction[]>([]);
+    const [documents, setDocuments] = useState<Document[]>([]);
     const [notifications, setNotifications] = useState<any[]>([]);
+    const [performanceData, setPerformanceData] = useState<PerformanceData[]>([]);
     const [loading, setLoading] = useState(true);
-    const [activeTab, setActiveTab] = useState<'overview' | 'transactions' | 'documents' | 'profile'>('overview');
+    const [activeTab, setActiveTab] = useState(initialTab);
+
+    // Keep activeTab in sync with initialTab prop changes (e.g. from routing)
+    useEffect(() => {
+        setActiveTab(initialTab);
+    }, [initialTab]);
 
     // Portfolio summary calculations
     const totalInvested = investments.reduce((acc, inv) => acc + inv.amount, 0);
@@ -44,39 +71,93 @@ export default function InvestorPortal() {
 
         setLoading(true);
         try {
-            // Mock data for now - replace with actual Supabase queries
-            setInvestments([
-                {
-                    id: '1',
-                    fund_name: 'Tech Growth Fund',
-                    amount: 50000,
-                    shares: 100,
-                    invested_date: '2024-01-15',
-                    current_value: 58500,
-                    return_percentage: 17.0
-                },
-                {
-                    id: '2',
-                    fund_name: 'Real Estate Fund',
-                    amount: 75000,
-                    shares: 150,
-                    invested_date: '2024-03-20',
-                    current_value: 82500,
-                    return_percentage: 10.0
+            // 1. Fetch the investor profile linked to this auth user
+            const { data: investorData, error: investorError } = await supabase
+                .from('investors')
+                .select('id, name')
+                .eq('auth_user_id', user.id)
+                .single();
+
+            if (investorError) {
+                if (investorError.code === 'PGRST116') {
+                    // No investor linked yet - this is a new user
+                    setInvestments([]);
+                    setTransactions([]);
+                    setNotifications([{
+                        id: 'welcome',
+                        title: 'Welcome to Zigma',
+                        message: 'An administrator will link your portfolio details shortly.',
+                        date: new Date().toISOString(),
+                        read: false
+                    }]);
+                    return;
                 }
-            ]);
+                throw investorError;
+            }
 
-            setTransactions([
-                { id: '1', type: 'Investment', amount: 50000, date: '2024-01-15', description: 'Tech Growth Fund - Initial Investment' },
-                { id: '2', type: 'Dividend', amount: 2500, date: '2024-06-15', description: 'Tech Growth Fund - Q2 Dividend' },
-                { id: '3', type: 'Investment', amount: 75000, date: '2024-03-20', description: 'Real Estate Fund - Initial Investment' },
-                { id: '4', type: 'Dividend', amount: 1500, date: '2024-09-15', description: 'Real Estate Fund - Q3 Dividend' },
-            ]);
+            // 2. Fetch investments (subscriptions) for this investor
+            const { data: subs, error: subsError } = await supabase
+                .from('subscriptions')
+                .select(`
+                    id,
+                    amount,
+                    signed_date,
+                    status,
+                    opportunities ( name )
+                `)
+                .eq('investor_id', investorData.id);
 
+            if (subsError) throw subsError;
+
+            // Map subscriptions to Investment interface
+            const mappedInvestments: Investment[] = (subs || []).map((s: any) => ({
+                id: s.id,
+                fund_name: s.opportunities?.name || 'Private Investment',
+                amount: Number(s.amount),
+                shares: 0,
+                invested_date: s.signed_date || new Date().toISOString(),
+                current_value: Number(s.amount) * 1.05, // Hypothetical growth
+                return_percentage: 5.0
+            }));
+
+            setInvestments(mappedInvestments);
+
+            // 3. Fetch Real Transactions
+            const { data: txns, error: txnsError } = await supabase
+                .from('transactions')
+                .select('*')
+                .eq('investor_id', investorData.id)
+                .order('date', { ascending: false });
+
+            if (txnsError) throw txnsError;
+            setTransactions(txns || []);
+
+            // 4. Fetch Real Documents
+            const { data: docs, error: docsError } = await supabase
+                .from('documents')
+                .select('*')
+                .eq('investor_id', investorData.id)
+                .order('created_at', { ascending: false });
+
+            if (docsError) throw docsError;
+            setDocuments(docs || []);
+
+            // 5. Generate Performance Chart Data (Mocking trend for now based on investments)
+            const performanceTrend = [
+                { name: 'Jan', value: totalInvested * 0.98 },
+                { name: 'Feb', value: totalInvested * 0.99 },
+                { name: 'Mar', value: totalInvested * 1.01 },
+                { name: 'Apr', value: totalInvested * 1.03 },
+                { name: 'May', value: totalInvested * 1.04 },
+                { name: 'Jun', value: totalInvested * 1.05 },
+            ];
+            setPerformanceData(performanceTrend);
+
+            // 6. Fetch Notifications
             setNotifications([
-                { id: '1', title: 'Q4 Dividend Payment', message: 'Your dividend will be processed on Dec 31', date: '2024-12-01', read: false },
-                { id: '2', title: 'Annual Report Available', message: 'Download your 2024 annual report', date: '2024-11-15', read: true },
+                { id: '1', title: 'Portfolio Updated', message: 'Your investment records have been synchronized.', date: new Date().toISOString(), read: false }
             ]);
+
         } catch (error) {
             console.error('Error fetching investor data:', error);
         } finally {
@@ -173,21 +254,55 @@ export default function InvestorPortal() {
                         />
                     </div>
 
+                    {/* Performance Analytics */}
+                    <div className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
+                        <div className="flex justify-between items-center mb-6">
+                            <h3 className="font-bold text-gray-900 dark:text-white">Portfolio Performance</h3>
+                            <div className="flex items-center gap-2">
+                                <span className="flex items-center gap-1 text-xs text-green-600 font-medium">
+                                    <TrendingUp className="w-3 h-3" /> +5.2% YTD
+                                </span>
+                            </div>
+                        </div>
+                        <div className="h-[300px]">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <AreaChart data={performanceData}>
+                                    <defs>
+                                        <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="#6366f1" stopOpacity={0.1} />
+                                            <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
+                                        </linearGradient>
+                                    </defs>
+                                    <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="#E5E7EB" />
+                                    <XAxis dataKey="name" stroke="#9CA3AF" fontSize={12} tickLine={false} axisLine={false} />
+                                    <YAxis stroke="#9CA3AF" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `$${(value / 1000).toFixed(0)}k`} />
+                                    <Tooltip
+                                        contentStyle={{ backgroundColor: '#fff', borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+                                        formatter={(value: any) => [`$${value.toLocaleString()}`, 'Portfolio Value']}
+                                    />
+                                    <Area type="monotone" dataKey="value" stroke="#6366f1" fillOpacity={1} fill="url(#colorValue)" strokeWidth={2} />
+                                </AreaChart>
+                            </ResponsiveContainer>
+                        </div>
+                    </div>
+
                     {/* Investment Portfolio */}
                     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700">
-                        <div className="p-6 border-b border-gray-100 dark:border-gray-700">
+                        <div className="p-6 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
                             <h2 className="text-lg font-bold text-gray-900 dark:text-white">My Investments</h2>
+                            <button className="text-sm text-indigo-600 font-medium flex items-center gap-1">
+                                <FileText className="w-4 h-4" /> Reports
+                            </button>
                         </div>
                         <div className="overflow-x-auto">
                             <table className="w-full">
                                 <thead className="bg-gray-50 dark:bg-gray-700/30">
                                     <tr>
-                                        <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Fund</th>
+                                        <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Fund / Opportunity</th>
                                         <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Invested</th>
-                                        <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Shares</th>
                                         <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Current Value</th>
                                         <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Return</th>
-                                        <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Date</th>
+                                        <th className="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Status</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
@@ -195,14 +310,20 @@ export default function InvestorPortal() {
                                         <tr key={inv.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
                                             <td className="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">{inv.fund_name}</td>
                                             <td className="px-6 py-4 text-sm text-gray-500">${inv.amount.toLocaleString()}</td>
-                                            <td className="px-6 py-4 text-sm text-gray-500">{inv.shares}</td>
                                             <td className="px-6 py-4 text-sm font-medium text-gray-900 dark:text-white">${inv.current_value.toLocaleString()}</td>
                                             <td className="px-6 py-4 text-sm">
                                                 <span className="text-green-600 font-medium">+{inv.return_percentage}%</span>
                                             </td>
-                                            <td className="px-6 py-4 text-sm text-gray-500">{new Date(inv.invested_date).toLocaleDateString()}</td>
+                                            <td className="px-6 py-4 text-sm">
+                                                <span className="px-2 py-0.5 bg-green-100 text-green-700 rounded-full text-xs font-medium">Active</span>
+                                            </td>
                                         </tr>
                                     ))}
+                                    {investments.length === 0 && (
+                                        <tr>
+                                            <td colSpan={5} className="px-6 py-8 text-center text-gray-500 italic">No investment data linked yet.</td>
+                                        </tr>
+                                    )}
                                 </tbody>
                             </table>
                         </div>
@@ -296,18 +417,29 @@ export default function InvestorPortal() {
                             <h2 className="text-lg font-bold text-gray-900 dark:text-white">My Documents</h2>
                         </div>
                         <div className="p-6 space-y-3">
-                            {['Annual Statement 2024.pdf', 'Investment Agreement.pdf', 'Tax Document 2024.pdf'].map((doc, idx) => (
-                                <div key={idx} className="flex items-center justify-between p-4 border border-gray-100 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50">
+                            {documents.map((doc) => (
+                                <div key={doc.id} className="flex items-center justify-between p-4 border border-gray-100 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700/50">
                                     <div className="flex items-center gap-3">
                                         <FileText className="w-5 h-5 text-gray-400" />
-                                        <span className="text-sm font-medium text-gray-900 dark:text-white">{doc}</span>
+                                        <div>
+                                            <span className="text-sm font-medium text-gray-900 dark:text-white block">{doc.name}</span>
+                                            <span className="text-[10px] text-gray-400 uppercase font-semibold tracking-wider">{doc.type}</span>
+                                        </div>
                                     </div>
-                                    <button className="text-indigo-600 hover:text-indigo-500 text-sm font-medium flex items-center gap-2">
+                                    <a
+                                        href={doc.url}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-indigo-600 hover:text-indigo-500 text-sm font-medium flex items-center gap-2"
+                                    >
                                         <Download className="w-4 h-4" />
                                         Download
-                                    </button>
+                                    </a>
                                 </div>
                             ))}
+                            {documents.length === 0 && (
+                                <div className="text-center py-8 text-gray-500 italic text-sm">No documents available yet.</div>
+                            )}
                         </div>
                     </div>
                 </div>
